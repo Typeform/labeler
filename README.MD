@@ -3,19 +3,6 @@ A Github Action Helps you add and remove labels of all PRs in a given repo.
 
 ## Usage
 ### Input Variables:   
-
-  github-token:
-    description: your github token
-    required: true
-  repository-name:
-    description: the name of the repository the action is ran
-    required: true
-  label_action:
-    description: choice between add/remove
-    required: true
-  label:
-    description: what label to or remove
-    required: true
 ```github-token```: Mandatory, Github API TOKEN. [More info](https://github.com/settings/tokens)  
 ```repository-name```: Mandatory, string, the repository where the action is ran. eg: Typeform/labeler
 ```label_action```: Mandatory, option between add or remove    
