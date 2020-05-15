@@ -1,0 +1,23 @@
+name: tf-labeler
+author: Typeform
+description: Helps you add and remove labels of all PRs in a given repo.
+inputs:
+  github-token:
+    description: your github token
+    required: true
+  repository-name:
+    description: the name of the repository the action is ran
+    required: true
+  label_action:
+    description: choice between add/remove
+    required: true
+  label:
+    description: what label to or remove
+    required: true
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+branding:
+  icon: 'tag'
+  color: 'green'
+
