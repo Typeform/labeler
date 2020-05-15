@@ -16,5 +16,5 @@ jobs:
         with:
           github-token: ${{ secrets.labeler_github_token }}
           repository-name: ${{ github.repository }}
-          label_action: add
+          label-action: add
           label: LABELER_TEST
