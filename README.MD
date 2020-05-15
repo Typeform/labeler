@@ -1,5 +1,5 @@
 # labeler
-A Github Action Helps you add and remove labels of all PRs in a given repo.
+A Github Action that helps you to add and remove labels of all PRs in a given repo.
 
 ## Usage
 ### Input Variables:   
