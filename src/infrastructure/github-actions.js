@@ -1,6 +1,6 @@
 const core = require('@actions/core')
 
-const { DEFAULT_GITHUB_TOKEN, DEFAULT_LABEL, DEFAULT_LABEL_ACTION, DEFAULT_REPOSITORY_NAME } = require('./constants')
+const { DEFAULT_GITHUB_TOKEN, DEFAULT_LABEL, DEFAULT_LABEL_ACTION, DEFAULT_REPOSITORY_NAME, DEFAULT_BASE_BRANCH } = require('./constants')
 
 /**
  * Gets github token and parses it
@@ -42,6 +42,13 @@ const getLabel = () => {
 }
 
 /**
+ * Gets base branch
+ */
+const getBaseBranch = () => {
+  return (core.getInput('base-branch') || DEFAULT_BASE_BRANCH)
+}
+
+/**
  * Sets the Github Action to fail
  * @param {string} message
  */
@@ -55,4 +62,5 @@ module.exports = {
   getLabel,
   getLabelAction,
   getRepositoryName,
+  getBaseBranch,
 }

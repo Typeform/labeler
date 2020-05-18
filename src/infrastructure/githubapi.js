@@ -1,39 +1,41 @@
-const axios = require('axios')
+const { Octokit } = require('@octokit/rest')
 
 const { getGithubToken } = require('./github-actions')
 
-const githubToken = getGithubToken()
+const octokit = new Octokit({
+  auth: getGithubToken(),
+})
 
 /**
- * Makes a call to get all the Open PRs for a Repo
- * @param {string} repoNameWithOwner eg: Typeform/siesta
+ * Makes a call to get all the Open PRs for a Repo using pagination
+ * @param {string} repoOwner eg: Typeform
+ * @param {string} repoName eg: labeler
+ * @param {string} baseBranch eg: master
  */
-const listAllOpenPRsForRepo = async (repoNameWithOwner) => {
-  return axios({
-    method: 'GET',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/pulls`,
-  }).then(response => response.data)
+const listAllOpenPRsForRepo = async (repoOwner, repoName, baseBranch) => {
+  const params = {
+    owner: repoOwner,
+    repo: repoName,
+  }
+  if (baseBranch) params.base = baseBranch
+  return octokit.paginate('GET /repos/:owner/:repo/pulls', params)
 }
 
 /**
  * Updates the label of a PR
- * @param {string} repoNameWithOwner eg: Typeform/siesta
+ * @param {string} repoOwner eg: Typeform
+ * @param {string} repoName eg: labeler
  * @param {string} number of the pull request
  * @param {Array} labels to be added to the pull request
  */
 
-const updatePRLabels = async (repoNameWithOwner, number, labels) => {
-  return axios({
-    method: 'PATCH',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/issues/${number}`,
-    data: {
-      labels,
-    },
-  }).then(response => response.data)
+const updatePRLabels = async (repoOwner, repoName, number, labels) => {
+  return octokit.issues.update({
+    owner: repoOwner,
+    repo: repoName,
+    issue_number: number,
+    labels,
+  })
 }
 
 module.exports = {

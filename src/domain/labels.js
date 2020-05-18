@@ -1,4 +1,3 @@
-
 /**
  * Gets all the PR Numbers of a list of Github PullRequest
  * @param {Array} allPRsResponse
@@ -15,7 +14,6 @@ const getPRNumbers = (allPRsResponse) => {
  * Gets all labels for each PR Number in the form of Array of Arrays
  * @param {Array} allPRsResponse
  */
-
 const getPRLabels = (allPRsResponse) => {
   const labelsForPRs = []
   allPRsResponse.forEach(pr => {

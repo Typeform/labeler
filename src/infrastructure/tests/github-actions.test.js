@@ -104,6 +104,18 @@ describe('getLabel', () => {
   })
 })
 
+describe('getBaseBranch', () => {
+  beforeEach(() => {
+    jest.resetModules()
+  })
+  it('should return a base branch', () => {
+    jest.mock('../constants', () => ({ DEFAULT_BASE_BRANCH: 'master' }))
+    // eslint-disable-next-line global-require
+    const { getBaseBranch } = require('../github-actions')
+    expect(getBaseBranch()).toEqual('master')
+  })
+})
+
 describe('throwGithubError', () => {
   beforeEach(() => {
     jest.resetModules()

@@ -18,3 +18,4 @@ jobs:
           repository-name: ${{ github.repository }}
           label-action: add
           label: LABELER_TEST
+          base-branch: master

@@ -3,17 +3,21 @@ author: Typeform
 description: Helps you add and remove labels of all PRs in a given repo.
 inputs:
   github-token:
-    description: your github token
+    description: the github API token
     required: true
   repository-name:
-    description: the name of the repository the action is ran
+    description: the name of the repository over which the action needs to be ran
     required: true
   label-action:
-    description: choice between add/remove
+    description: add or remove the specified label
     required: true
   label:
-    description: what label to or remove
+    description: the label name to add or remove
     required: true
+  base-branch:
+    description: filter pulls by base branch name
+    required: false
+    default: all
 runs:
   using: 'node12'
   main: 'dist/index.js'
