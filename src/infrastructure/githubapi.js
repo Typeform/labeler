@@ -21,40 +21,21 @@ const listAllOpenPRsForRepo = async (repoNameWithOwner) => {
  * Updates the label of a PR
  * @param {string} repoNameWithOwner eg: Typeform/siesta
  * @param {string} number of the pull request
- * @param {string} label to be added to the pull request
+ * @param {Array} labels to be added to the pull request
  */
 
-const updatePRLabels = async (repoNameWithOwner, number, label) => {
+const updatePRLabels = async (repoNameWithOwner, number, labels) => {
   return axios({
     method: 'PATCH',
     baseURL: 'https://api.github.com/',
     headers: { Authorization: `Bearer ${githubToken}` },
     url: `repos/${repoNameWithOwner}/issues/${number}`,
     data: {
-      labels: [`${label}`],
-    },
-  }).then(response => response.data)
-}
-
-/**
- * Deletes the labels of a PR
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- * @param {string} number of the pull request
-
- */
-
-const deletePRLabels = async (repoNameWithOwner, number) => {
-  return axios({
-    method: 'PATCH',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/issues/${number}`,
-    data: {
-      labels: [],
+      labels,
     },
   }).then(response => response.data)
 }
 
 module.exports = {
-  listAllOpenPRsForRepo, updatePRLabels, deletePRLabels,
+  listAllOpenPRsForRepo, updatePRLabels,
 }

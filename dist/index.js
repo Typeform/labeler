@@ -1574,6 +1574,97 @@ module.exports = InterceptorManager;
 
 /***/ }),
 
+/***/ 315:
+/***/ (function(module) {
+
+
+/**
+ * Gets all the PR Numbers of a list of Github PullRequest
+ * @param {Array} allPRsResponse
+ */
+const getPRNumbers = (allPRsResponse) => {
+  const prNumbers = []
+  allPRsResponse.forEach(pr => {
+    prNumbers.push(pr.number)
+  })
+  return prNumbers
+}
+
+/**
+ * Gets all labels for each PR Number in the form of Array of Arrays
+ * @param {Array} allPRsResponse
+ */
+
+const getPRLabels = (allPRsResponse) => {
+  const labelsForPRs = []
+  allPRsResponse.forEach(pr => {
+    const labelsForPR = []
+    pr.labels.forEach(label => {
+      labelsForPR.push(label.name)
+    })
+    labelsForPRs.push(labelsForPR)
+  })
+  return labelsForPRs
+}
+
+/**
+ * Adds a new label to existing Labels list
+ * @param {string} labelToAdd
+ * @param {Array} existingLabels
+ */
+const addLabelToLabelsList = (labelToAdd, existingLabels) => {
+  let isLabelToAddAlreadyPresent = false
+  existingLabels.forEach(existingLabel => {
+    if (existingLabel === labelToAdd) isLabelToAddAlreadyPresent = true
+  })
+  if (isLabelToAddAlreadyPresent) return existingLabels
+
+  existingLabels.push(labelToAdd)
+  return existingLabels
+}
+
+/**
+ * Removes a label from existing Labels list
+ * @param {string} labelToRemove
+ * @param {Array} existingLabels
+ */
+const removeLabelFromLabelsList = (labelToRemove, existingLabels) => {
+  for (let i = existingLabels.length - 1; i >= 0; i--) {
+    if (existingLabels[i] === labelToRemove) {
+      existingLabels.splice(i, 1)
+    }
+  }
+  return existingLabels
+}
+
+/**
+ * Updates the array of labels with adding/removing the desired label
+ * @param {string} labelAction (eg:add/remove)
+ * @param {string} label
+ * @param {Array} allPRLabels
+ */
+const updateLabelsForAllPRs = (labelAction, label, allPRLabels) => {
+  labelAction = labelAction.toLowerCase()
+  if (labelAction !== 'add' && labelAction !== 'remove') throw new Error('Error updating all PR Labels. Invalid Label Action')
+  const updatedAllPRLabels = []
+  allPRLabels.forEach(prLabels => {
+    if (labelAction === 'add') updatedAllPRLabels.push(addLabelToLabelsList(label, prLabels))
+    else if (labelAction === 'remove') updatedAllPRLabels.push(removeLabelFromLabelsList(label, prLabels))
+  })
+  return updatedAllPRLabels
+}
+
+module.exports = {
+  getPRNumbers,
+  getPRLabels,
+  addLabelToLabelsList,
+  removeLabelFromLabelsList,
+  updateLabelsForAllPRs,
+}
+
+
+/***/ }),
+
 /***/ 317:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2033,58 +2124,6 @@ function escapeProperty(s) {
         .replace(/,/g, '%2C');
 }
 //# sourceMappingURL=command.js.map
-
-/***/ }),
-
-/***/ 443:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-const { listAllOpenPRsForRepo, updatePRLabels, deletePRLabels } = __webpack_require__(880)
-const { asyncForEach } = __webpack_require__(85)
-
-/**
- * Gets all the PR Numbers of a list of Github PullRequest
- * @param {Array} allPRsResponse
- */
-const getPRNumbers = (allPRsResponse) => {
-  const prNumbers = []
-  allPRsResponse.forEach(pr => {
-    prNumbers.push(pr.number)
-  })
-  return prNumbers
-}
-
-/**
- * Returns an array with all the open PRs of that repo
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- */
-
-const getPRNumbersForRepo = async (repoNameWithOwner) => {
-  return getPRNumbers(await listAllOpenPRsForRepo(repoNameWithOwner))
-}
-
-/**
- * Updates All PRs of a Repo with the given label
- * @param {Array} allPRNumbers
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- * @param {string} labelAction add or remove
- * @param {string} label to be added to the pull request
- */
-
-const updateAllPRLabels = async (allPRNumbers, repoNameWithOwner, labelAction, label) => {
-  await asyncForEach(allPRNumbers, async (prNumber) => {
-    if (labelAction === 'add') return await updatePRLabels(repoNameWithOwner, `${prNumber}`, label)
-    else if (labelAction === 'remove') return await deletePRLabels(repoNameWithOwner, `${prNumber}`)
-    throw new Error('Error updating all PR Labels. Invalid Label Action')
-  })
-}
-
-module.exports = {
-  getPRNumbers,
-  getPRNumbersForRepo,
-  updateAllPRLabels,
-}
-
 
 /***/ }),
 
@@ -3364,14 +3403,22 @@ module.exports = (
 /***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
 
 __webpack_require__(63).config()
-
+const { getPRNumbers, getPRLabels, updateLabelsForAllPRs } = __webpack_require__(315)
 const { getRepositoryName, getLabel, throwGithubError, getLabelAction } = __webpack_require__(501)
-const { updateAllPRLabels, getPRNumbersForRepo } = __webpack_require__(443)
+const { listAllOpenPRsForRepo, updatePRLabels } = __webpack_require__(880)
+const { asyncForEach } = __webpack_require__(85)
 
 const main = async () => {
   try {
-    const repoName = getRepositoryName()
-    await updateAllPRLabels(await getPRNumbersForRepo(repoName), repoName, getLabelAction(), getLabel())
+    const repoNameWithOwner = getRepositoryName()
+    const prInfoResponse = await listAllOpenPRsForRepo(repoNameWithOwner)
+    const allPRNumbers = getPRNumbers(prInfoResponse)
+    const allUpdatedPRLabels = updateLabelsForAllPRs(getLabelAction(), getLabel(), getPRLabels(prInfoResponse))
+    await asyncForEach(allPRNumbers, async (prNumber) => {
+      await asyncForEach(allUpdatedPRLabels, async (updatedPrLabels) => {
+        await updatePRLabels(repoNameWithOwner, `${prNumber}`, updatedPrLabels)
+      })
+    })
   } catch (error) {
     throwGithubError(error.message)
   }
@@ -3926,42 +3973,23 @@ const listAllOpenPRsForRepo = async (repoNameWithOwner) => {
  * Updates the label of a PR
  * @param {string} repoNameWithOwner eg: Typeform/siesta
  * @param {string} number of the pull request
- * @param {string} label to be added to the pull request
+ * @param {Array} labels to be added to the pull request
  */
 
-const updatePRLabels = async (repoNameWithOwner, number, label) => {
+const updatePRLabels = async (repoNameWithOwner, number, labels) => {
   return axios({
     method: 'PATCH',
     baseURL: 'https://api.github.com/',
     headers: { Authorization: `Bearer ${githubToken}` },
     url: `repos/${repoNameWithOwner}/issues/${number}`,
     data: {
-      labels: [`${label}`],
-    },
-  }).then(response => response.data)
-}
-
-/**
- * Deletes the labels of a PR
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- * @param {string} number of the pull request
-
- */
-
-const deletePRLabels = async (repoNameWithOwner, number) => {
-  return axios({
-    method: 'PATCH',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/issues/${number}`,
-    data: {
-      labels: [],
+      labels,
     },
   }).then(response => response.data)
 }
 
 module.exports = {
-  listAllOpenPRsForRepo, updatePRLabels, deletePRLabels,
+  listAllOpenPRsForRepo, updatePRLabels,
 }
 
 
