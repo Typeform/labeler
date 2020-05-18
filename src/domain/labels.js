@@ -32,14 +32,15 @@ const getPRLabels = (allPRsResponse) => {
  * @param {Array} existingLabels
  */
 const addLabelToLabelsList = (labelToAdd, existingLabels) => {
+  const resultingLabels = existingLabels.slice()
   let isLabelToAddAlreadyPresent = false
-  existingLabels.forEach(existingLabel => {
+  resultingLabels.forEach(existingLabel => {
     if (existingLabel === labelToAdd) isLabelToAddAlreadyPresent = true
   })
-  if (isLabelToAddAlreadyPresent) return existingLabels
+  if (isLabelToAddAlreadyPresent) return resultingLabels
 
-  existingLabels.push(labelToAdd)
-  return existingLabels
+  resultingLabels.push(labelToAdd)
+  return resultingLabels
 }
 
 /**
@@ -48,12 +49,13 @@ const addLabelToLabelsList = (labelToAdd, existingLabels) => {
  * @param {Array} existingLabels
  */
 const removeLabelFromLabelsList = (labelToRemove, existingLabels) => {
-  for (let i = existingLabels.length - 1; i >= 0; i--) {
-    if (existingLabels[i] === labelToRemove) {
-      existingLabels.splice(i, 1)
+  const resultingLabels = existingLabels.slice()
+  for (let i = resultingLabels.length - 1; i >= 0; i--) {
+    if (resultingLabels[i] === labelToRemove) {
+      resultingLabels.splice(i, 1)
     }
   }
-  return existingLabels
+  return resultingLabels
 }
 
 /**

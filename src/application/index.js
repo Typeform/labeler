@@ -7,13 +7,16 @@ const { asyncForEach } = require('../infrastructure/utils')
 
 const main = async () => {
   try {
-    const repository = getSeparatedRepositoryNameAndOwner(getRepositoryName())
-    const prInfoResponse = await listAllOpenPRsForRepo(repository.owner, repository.name, getBaseBranch())
+    const { owner: repoOwner, name: repoName } = getSeparatedRepositoryNameAndOwner(getRepositoryName())
+    const prInfoResponse = await listAllOpenPRsForRepo(repoOwner, repoName, getBaseBranch())
     const allPRNumbers = getPRNumbers(prInfoResponse)
-    const allUpdatedPRLabels = updateLabelsForAllPRs(getLabelAction(), getLabel(), getPRLabels(prInfoResponse))
+    const allCurrentPRLabels = getPRLabels(prInfoResponse)
+    const allUpdatedPRLabels = updateLabelsForAllPRs(getLabelAction(), getLabel(), allCurrentPRLabels)
     await asyncForEach(allPRNumbers, async (prNumber) => {
       await asyncForEach(allUpdatedPRLabels, async (updatedPrLabels) => {
-        await updatePRLabels(repository.owner, repository.name, `${prNumber}`, updatedPrLabels)
+        await asyncForEach(allCurrentPRLabels, async (currentPrLabels) => {
+          if (currentPrLabels !== updatedPrLabels) await updatePRLabels(repoOwner, repoName, `${prNumber}`, updatedPrLabels)
+        })
       })
     })
   } catch (error) {

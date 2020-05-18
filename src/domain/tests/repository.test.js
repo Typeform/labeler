@@ -3,7 +3,7 @@ describe('getSeparatedRepositoryNameAndOwner', () => {
   beforeEach(() => {
     jest.resetModules()
   })
-  it('should return an object of all PRs', () => {
+  it('should return separated name and owner', () => {
     expect(getSeparatedRepositoryNameAndOwner('Typeform/labeler')).toEqual({ owner: 'Typeform', name: 'labeler' })
   })
 })
