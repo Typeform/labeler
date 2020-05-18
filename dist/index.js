@@ -2665,14 +2665,15 @@ const getPRLabels = (allPRsResponse) => {
  * @param {Array} existingLabels
  */
 const addLabelToLabelsList = (labelToAdd, existingLabels) => {
+  const resultingLabels = existingLabels.slice()
   let isLabelToAddAlreadyPresent = false
-  existingLabels.forEach(existingLabel => {
+  resultingLabels.forEach(existingLabel => {
     if (existingLabel === labelToAdd) isLabelToAddAlreadyPresent = true
   })
-  if (isLabelToAddAlreadyPresent) return existingLabels
+  if (isLabelToAddAlreadyPresent) return resultingLabels
 
-  existingLabels.push(labelToAdd)
-  return existingLabels
+  resultingLabels.push(labelToAdd)
+  return resultingLabels
 }
 
 /**
@@ -2681,12 +2682,13 @@ const addLabelToLabelsList = (labelToAdd, existingLabels) => {
  * @param {Array} existingLabels
  */
 const removeLabelFromLabelsList = (labelToRemove, existingLabels) => {
-  for (let i = existingLabels.length - 1; i >= 0; i--) {
-    if (existingLabels[i] === labelToRemove) {
-      existingLabels.splice(i, 1)
+  const resultingLabels = existingLabels.slice()
+  for (let i = resultingLabels.length - 1; i >= 0; i--) {
+    if (resultingLabels[i] === labelToRemove) {
+      resultingLabels.splice(i, 1)
     }
   }
-  return existingLabels
+  return resultingLabels
 }
 
 /**
@@ -6234,13 +6236,16 @@ const { asyncForEach } = __webpack_require__(85)
 
 const main = async () => {
   try {
-    const repository = getSeparatedRepositoryNameAndOwner(getRepositoryName())
-    const prInfoResponse = await listAllOpenPRsForRepo(repository.owner, repository.name, getBaseBranch())
+    const { owner: repoOwner, name: repoName } = getSeparatedRepositoryNameAndOwner(getRepositoryName())
+    const prInfoResponse = await listAllOpenPRsForRepo(repoOwner, repoName, getBaseBranch())
     const allPRNumbers = getPRNumbers(prInfoResponse)
-    const allUpdatedPRLabels = updateLabelsForAllPRs(getLabelAction(), getLabel(), getPRLabels(prInfoResponse))
+    const allCurrentPRLabels = getPRLabels(prInfoResponse)
+    const allUpdatedPRLabels = updateLabelsForAllPRs(getLabelAction(), getLabel(), allCurrentPRLabels)
     await asyncForEach(allPRNumbers, async (prNumber) => {
       await asyncForEach(allUpdatedPRLabels, async (updatedPrLabels) => {
-        await updatePRLabels(repository.owner, repository.name, `${prNumber}`, updatedPrLabels)
+        await asyncForEach(allCurrentPRLabels, async (currentPrLabels) => {
+          if (currentPrLabels !== updatedPrLabels) await updatePRLabels(repoOwner, repoName, `${prNumber}`, updatedPrLabels)
+        })
       })
     })
   } catch (error) {
