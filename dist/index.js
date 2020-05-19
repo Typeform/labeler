@@ -1984,28 +1984,6 @@ module.exports = opts => {
 
 /***/ }),
 
-/***/ 85:
-/***/ (function(module) {
-
-/**
- * Executes an forEach in an async fashion
- * @param {Array} array
- * @param {function} callback
- */
-
-async function asyncForEach (array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array)
-  }
-}
-
-module.exports = {
-  asyncForEach,
-}
-
-
-/***/ }),
-
 /***/ 87:
 /***/ (function(module) {
 
@@ -2624,97 +2602,6 @@ paginateRest.VERSION = VERSION;
 
 exports.paginateRest = paginateRest;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 315:
-/***/ (function(module) {
-
-/**
- * Gets all the PR Numbers of a list of Github PullRequest
- * @param {Array} allPRsResponse
- */
-const getPRNumbers = (allPRsResponse) => {
-  const prNumbers = []
-  allPRsResponse.forEach(pr => {
-    prNumbers.push(pr.number)
-  })
-  return prNumbers
-}
-
-/**
- * Gets all labels for each PR Number in the form of Array of Arrays
- * @param {Array} allPRsResponse
- */
-const getPRLabels = (allPRsResponse) => {
-  const labelsForPRs = []
-  allPRsResponse.forEach(pr => {
-    const labelsForPR = []
-    pr.labels.forEach(label => {
-      labelsForPR.push(label.name)
-    })
-    labelsForPRs.push(labelsForPR)
-  })
-  return labelsForPRs
-}
-
-/**
- * Adds a new label to existing Labels list
- * @param {string} labelToAdd
- * @param {Array} existingLabels
- */
-const addLabelToLabelsList = (labelToAdd, existingLabels) => {
-  const resultingLabels = existingLabels.slice()
-  let isLabelToAddAlreadyPresent = false
-  resultingLabels.forEach(existingLabel => {
-    if (existingLabel === labelToAdd) isLabelToAddAlreadyPresent = true
-  })
-  if (isLabelToAddAlreadyPresent) return resultingLabels
-
-  resultingLabels.push(labelToAdd)
-  return resultingLabels
-}
-
-/**
- * Removes a label from existing Labels list
- * @param {string} labelToRemove
- * @param {Array} existingLabels
- */
-const removeLabelFromLabelsList = (labelToRemove, existingLabels) => {
-  const resultingLabels = existingLabels.slice()
-  for (let i = resultingLabels.length - 1; i >= 0; i--) {
-    if (resultingLabels[i] === labelToRemove) {
-      resultingLabels.splice(i, 1)
-    }
-  }
-  return resultingLabels
-}
-
-/**
- * Updates the array of labels with adding/removing the desired label
- * @param {string} labelAction (eg:add/remove)
- * @param {string} label
- * @param {Array} allPRLabels
- */
-const updateLabelsForAllPRs = (labelAction, label, allPRLabels) => {
-  labelAction = labelAction.toLowerCase()
-  if (labelAction !== 'add' && labelAction !== 'remove') throw new Error('Error updating all PR Labels. Invalid Label Action')
-  const updatedAllPRLabels = []
-  allPRLabels.forEach(prLabels => {
-    if (labelAction === 'add') updatedAllPRLabels.push(addLabelToLabelsList(label, prLabels))
-    else if (labelAction === 'remove') updatedAllPRLabels.push(removeLabelFromLabelsList(label, prLabels))
-  })
-  return updatedAllPRLabels
-}
-
-module.exports = {
-  getPRNumbers,
-  getPRLabels,
-  addLabelToLabelsList,
-  removeLabelFromLabelsList,
-  updateLabelsForAllPRs,
-}
 
 
 /***/ }),
@@ -6228,26 +6115,28 @@ module.exports = (promise, onFinally) => {
 /***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
 
 __webpack_require__(63).config()
-const { getPRNumbers, getPRLabels, updateLabelsForAllPRs } = __webpack_require__(315)
 const { getSeparatedRepositoryNameAndOwner } = __webpack_require__(523)
 const { getRepositoryName, getLabel, throwGithubError, getLabelAction, getBaseBranch } = __webpack_require__(501)
 const { listAllOpenPRsForRepo, updatePRLabels } = __webpack_require__(880)
-const { asyncForEach } = __webpack_require__(85)
 
 const main = async () => {
   try {
     const { owner: repoOwner, name: repoName } = getSeparatedRepositoryNameAndOwner(getRepositoryName())
-    const prInfoResponse = await listAllOpenPRsForRepo(repoOwner, repoName, getBaseBranch())
-    const allPRNumbers = getPRNumbers(prInfoResponse)
-    const allCurrentPRLabels = getPRLabels(prInfoResponse)
-    const allUpdatedPRLabels = updateLabelsForAllPRs(getLabelAction(), getLabel(), allCurrentPRLabels)
-    await asyncForEach(allPRNumbers, async (prNumber) => {
-      await asyncForEach(allUpdatedPRLabels, async (updatedPrLabels) => {
-        await asyncForEach(allCurrentPRLabels, async (currentPrLabels) => {
-          if (currentPrLabels !== updatedPrLabels) await updatePRLabels(repoOwner, repoName, `${prNumber}`, updatedPrLabels)
-        })
-      })
-    })
+    const openPullRequests = await listAllOpenPRsForRepo(repoOwner, repoName, getBaseBranch())
+
+    for (const pr of openPullRequests) {
+      const labels = pr.labels.map(label => label.name)
+      switch (getLabelAction()) {
+        case 'add':
+          if (!labels.includes(getLabel())) await updatePRLabels(repoOwner, repoName, pr.number, [...labels, getLabel()])
+          break
+        case 'remove':
+          if (labels.includes(getLabel())) await updatePRLabels(repoOwner, repoName, pr.number, labels.filter(label => label !== getLabel()))
+          break
+        default:
+          throw new Error('Invalid Label Action, should be either ADD or REMOVE')
+      }
+    }
   } catch (error) {
     throwGithubError(error.message)
   }
@@ -8131,7 +8020,6 @@ const listAllOpenPRsForRepo = async (repoOwner, repoName, baseBranch) => {
  * @param {string} number of the pull request
  * @param {Array} labels to be added to the pull request
  */
-
 const updatePRLabels = async (repoOwner, repoName, number, labels) => {
   return octokit.issues.update({
     owner: repoOwner,
