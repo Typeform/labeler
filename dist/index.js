@@ -3251,7 +3251,7 @@ function escapeProperty(s) {
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var universalUserAgent = __webpack_require__(796);
-var beforeAfterHook = __webpack_require__(500);
+var beforeAfterHook = __webpack_require__(523);
 var request = __webpack_require__(753);
 var graphql = __webpack_require__(898);
 var authToken = __webpack_require__(813);
@@ -5450,70 +5450,6 @@ module.exports = resolveCommand;
 
 /***/ }),
 
-/***/ 500:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var register = __webpack_require__(280)
-var addHook = __webpack_require__(510)
-var removeHook = __webpack_require__(763)
-
-// bind with array of arguments: https://stackoverflow.com/a/21792913
-var bind = Function.bind
-var bindable = bind.bind(bind)
-
-function bindApi (hook, state, name) {
-  var removeHookRef = bindable(removeHook, null).apply(null, name ? [state, name] : [state])
-  hook.api = { remove: removeHookRef }
-  hook.remove = removeHookRef
-
-  ;['before', 'error', 'after', 'wrap'].forEach(function (kind) {
-    var args = name ? [state, kind, name] : [state, kind]
-    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args)
-  })
-}
-
-function HookSingular () {
-  var singularHookName = 'h'
-  var singularHookState = {
-    registry: {}
-  }
-  var singularHook = register.bind(null, singularHookState, singularHookName)
-  bindApi(singularHook, singularHookState, singularHookName)
-  return singularHook
-}
-
-function HookCollection () {
-  var state = {
-    registry: {}
-  }
-
-  var hook = register.bind(null, state)
-  bindApi(hook, state)
-
-  return hook
-}
-
-var collectionHookDeprecationMessageDisplayed = false
-function Hook () {
-  if (!collectionHookDeprecationMessageDisplayed) {
-    console.warn('[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4')
-    collectionHookDeprecationMessageDisplayed = true
-  }
-  return HookCollection()
-}
-
-Hook.Singular = HookSingular.bind()
-Hook.Collection = HookCollection.bind()
-
-module.exports = Hook
-// expose constructors as a named property for TypeScript
-module.exports.Hook = Hook
-module.exports.Singular = Hook.Singular
-module.exports.Collection = Hook.Collection
-
-
-/***/ }),
-
 /***/ 501:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -5531,9 +5467,9 @@ const getGithubToken = () => {
 }
 
 /**
- * Gets repository name
+ * Gets repository slug. Eg. Typeform/labeler
  */
-const getRepositoryName = () => {
+const getRepositorySlug = () => {
   const repositoryName = core.getInput('repository-name') || DEFAULT_REPOSITORY_NAME
   if (repositoryName) return repositoryName
   throw new Error('Missing Repository Name')
@@ -5569,10 +5505,19 @@ const getBaseBranch = () => {
 
 /**
  * Sets the Github Action to fail
- * @param {string} message
+ * @param {String} message
  */
 const throwGithubError = (message) => {
   core.setFailed(message)
+}
+
+/**
+ * returns the owner and name of the repo
+ * @param {String} repositoryNameAndOwner
+ */
+const getSeparatedRepositoryNameAndOwner = (repositoryNameAndOwner) => {
+  const splitNameAndOwner = repositoryNameAndOwner.split('/')
+  return { owner: splitNameAndOwner[0], name: splitNameAndOwner[1] }
 }
 
 module.exports = {
@@ -5580,8 +5525,9 @@ module.exports = {
   getGithubToken,
   getLabel,
   getLabelAction,
-  getRepositoryName,
+  getRepositorySlug,
   getBaseBranch,
+  getSeparatedRepositoryNameAndOwner,
 }
 
 
@@ -5641,20 +5587,65 @@ function addHook (state, kind, name, hook) {
 /***/ }),
 
 /***/ 523:
-/***/ (function(module) {
+/***/ (function(module, __unusedexports, __webpack_require__) {
 
-/**
- * returns the owner and name of the repo
- * @param {string} repositoryNameAndOwner
- */
-const getSeparatedRepositoryNameAndOwner = (repositoryNameAndOwner) => {
-  const splitNameAndOwner = repositoryNameAndOwner.split('/')
-  return { owner: splitNameAndOwner[0], name: splitNameAndOwner[1] }
+var register = __webpack_require__(280)
+var addHook = __webpack_require__(510)
+var removeHook = __webpack_require__(763)
+
+// bind with array of arguments: https://stackoverflow.com/a/21792913
+var bind = Function.bind
+var bindable = bind.bind(bind)
+
+function bindApi (hook, state, name) {
+  var removeHookRef = bindable(removeHook, null).apply(null, name ? [state, name] : [state])
+  hook.api = { remove: removeHookRef }
+  hook.remove = removeHookRef
+
+  ;['before', 'error', 'after', 'wrap'].forEach(function (kind) {
+    var args = name ? [state, kind, name] : [state, kind]
+    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args)
+  })
 }
 
-module.exports = {
-  getSeparatedRepositoryNameAndOwner,
+function HookSingular () {
+  var singularHookName = 'h'
+  var singularHookState = {
+    registry: {}
+  }
+  var singularHook = register.bind(null, singularHookState, singularHookName)
+  bindApi(singularHook, singularHookState, singularHookName)
+  return singularHook
 }
+
+function HookCollection () {
+  var state = {
+    registry: {}
+  }
+
+  var hook = register.bind(null, state)
+  bindApi(hook, state)
+
+  return hook
+}
+
+var collectionHookDeprecationMessageDisplayed = false
+function Hook () {
+  if (!collectionHookDeprecationMessageDisplayed) {
+    console.warn('[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4')
+    collectionHookDeprecationMessageDisplayed = true
+  }
+  return HookCollection()
+}
+
+Hook.Singular = HookSingular.bind()
+Hook.Collection = HookCollection.bind()
+
+module.exports = Hook
+// expose constructors as a named property for TypeScript
+module.exports.Hook = Hook
+module.exports.Singular = Hook.Singular
+module.exports.Collection = Hook.Collection
 
 
 /***/ }),
@@ -6115,23 +6106,53 @@ module.exports = (promise, onFinally) => {
 /***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
 
 __webpack_require__(63).config()
-const { getSeparatedRepositoryNameAndOwner } = __webpack_require__(523)
-const { getRepositoryName, getLabel, throwGithubError, getLabelAction, getBaseBranch } = __webpack_require__(501)
-const { listAllOpenPRsForRepo, updatePRLabels } = __webpack_require__(880)
+const { getLabel, throwGithubError, getLabelAction, getBaseBranch } = __webpack_require__(501)
+const GithubAPI = __webpack_require__(880)
+
+const aGithubAPI = new GithubAPI()
+
+/**
+ * Adds a label in a PullRequest
+ * @param {String} labelToAdd the label to be added
+ * @param {Array} labels list of labels already in the pull request
+ * @param {String} number of the pull request
+*/
+const addLabel = (labelToAdd, labels, number) => {
+  return aGithubAPI.updatePRLabels(number, [...labels, labelToAdd])
+}
+
+/**
+ * Removes a label from a PullRequest
+ * @param {String} labelToDelete the label to be removed
+ * @param {Array} labels list of labels already in the pull request
+ * @param {String} number of the pull request
+*/
+const removeLabel = (labelToDelete, labels, number) => {
+  return aGithubAPI.updatePRLabels(number, labels.filter(label => label !== labelToDelete))
+}
+
+/**
+ * Obtains a list of Open PullRequests (excluding Drafts, Closed,...) in a Github repository
+ * @param {String} baseBranch the base branch of the Pull Requests
+*/
+const listAllOpenPRs = (baseBranch) => {
+  return aGithubAPI.listAllOpenPRsForRepo(baseBranch)
+}
 
 const main = async () => {
   try {
-    const { owner: repoOwner, name: repoName } = getSeparatedRepositoryNameAndOwner(getRepositoryName())
-    const openPullRequests = await listAllOpenPRsForRepo(repoOwner, repoName, getBaseBranch())
+    const openPullRequests = await listAllOpenPRs(getBaseBranch())
 
     for (const pr of openPullRequests) {
       const labels = pr.labels.map(label => label.name)
       switch (getLabelAction()) {
         case 'add':
-          if (!labels.includes(getLabel())) await updatePRLabels(repoOwner, repoName, pr.number, [...labels, getLabel()])
+          // following conditions prevents extra github call to avoid reaching API limits
+          if (!labels.includes(getLabel())) await addLabel(getLabel(), labels, pr.number)
           break
         case 'remove':
-          if (labels.includes(getLabel())) await updatePRLabels(repoOwner, repoName, pr.number, labels.filter(label => label !== getLabel()))
+          // following conditions prevents extra github call to avoid reaching API limits
+          if (labels.includes(getLabel())) await removeLabel(getLabel(), labels, pr.number)
           break
         default:
           throw new Error('Invalid Label Action, should be either ADD or REMOVE')
@@ -7992,46 +8013,45 @@ module.exports = function (str) {
 
 const { Octokit } = __webpack_require__(889)
 
-const { getGithubToken } = __webpack_require__(501)
+const { getGithubToken, getSeparatedRepositoryNameAndOwner, getRepositorySlug } = __webpack_require__(501)
 
-const octokit = new Octokit({
-  auth: getGithubToken(),
-})
-
-/**
- * Makes a call to get all the Open PRs for a Repo using pagination
- * @param {string} repoOwner eg: Typeform
- * @param {string} repoName eg: labeler
- * @param {string} baseBranch eg: master
- */
-const listAllOpenPRsForRepo = async (repoOwner, repoName, baseBranch) => {
-  const params = {
-    owner: repoOwner,
-    repo: repoName,
+class GithubAPI {
+  constructor () {
+    this.authToken = getGithubToken()
+    this.repoOwner = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).owner
+    this.repoName = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).name
+    this.octokit = new Octokit({ auth: this.authToken })
   }
-  if (baseBranch) params.base = baseBranch
-  return octokit.paginate('GET /repos/:owner/:repo/pulls', params)
+
+  /**
+   * Makes a call to get all the Open PRs for a Repo using pagination
+   * @param {String} baseBranch eg: master
+   */
+  async listAllOpenPRsForRepo (baseBranch) {
+    const params = {
+      owner: this.repoOwner,
+      repo: this.repoName,
+    }
+    if (baseBranch) params.base = baseBranch
+    return this.octokit.paginate('GET /repos/:owner/:repo/pulls', params)
+  }
+
+  /**
+   * Updates the label of a PR
+   * @param {String} number of the pull request
+   * @param {Array} labels to be added to the pull request
+   */
+  async updatePRLabels (number, labels) {
+    return this.octokit.issues.update({
+      owner: this.repoOwner,
+      repo: this.repoName,
+      issue_number: number,
+      labels,
+    })
+  }
 }
 
-/**
- * Updates the label of a PR
- * @param {string} repoOwner eg: Typeform
- * @param {string} repoName eg: labeler
- * @param {string} number of the pull request
- * @param {Array} labels to be added to the pull request
- */
-const updatePRLabels = async (repoOwner, repoName, number, labels) => {
-  return octokit.issues.update({
-    owner: repoOwner,
-    repo: repoName,
-    issue_number: number,
-    labels,
-  })
-}
-
-module.exports = {
-  listAllOpenPRsForRepo, updatePRLabels,
-}
+module.exports = GithubAPI
 
 
 /***/ }),

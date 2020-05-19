@@ -1,52 +1,41 @@
 const { Octokit } = require('@octokit/rest')
 
-const { getGithubToken } = require('./github-actions')
+const { getGithubToken, getSeparatedRepositoryNameAndOwner, getRepositorySlug } = require('./github-actions')
 
-const octokit = new Octokit({
-  auth: getGithubToken(),
-})
-
-/**
- * Makes a call to get all the Open PRs for a Repo using pagination
- * @param {string} repoOwner eg: Typeform
- * @param {string} repoName eg: labeler
- * @param {string} baseBranch eg: master
- */
-const listAllOpenPRsForRepo = async (repoOwner, repoName, baseBranch) => {
-  const params = {
-    owner: repoOwner,
-    repo: repoName,
+class GithubAPI {
+  constructor () {
+    this.authToken = getGithubToken()
+    this.repoOwner = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).owner
+    this.repoName = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).name
+    this.octokit = new Octokit({ auth: this.authToken })
   }
-  if (baseBranch) params.base = baseBranch
-  return octokit.paginate('GET /repos/:owner/:repo/pulls', params)
+
+  /**
+   * Makes a call to get all the Open PRs for a Repo using pagination
+   * @param {String} baseBranch eg: master
+   */
+  async listAllOpenPRsForRepo (baseBranch) {
+    const params = {
+      owner: this.repoOwner,
+      repo: this.repoName,
+    }
+    if (baseBranch) params.base = baseBranch
+    return this.octokit.paginate('GET /repos/:owner/:repo/pulls', params)
+  }
+
+  /**
+   * Updates the label of a PR
+   * @param {String} number of the pull request
+   * @param {Array} labels to be added to the pull request
+   */
+  async updatePRLabels (number, labels) {
+    return this.octokit.issues.update({
+      owner: this.repoOwner,
+      repo: this.repoName,
+      issue_number: number,
+      labels,
+    })
+  }
 }
 
-const addLabel = (labelToAdd, labels, repoOwner, repoName, number) => {
-  updatePRLabels(repoOwner, repoName, number, [...labels, labelToAdd])
-}
-
-const removeLabel = (labelToDelete, labels, repoOwner, repoName, number) => {
-  updatePRLabels(repoOwner, repoName, number, labels.filter(label => label !== labelToDelete))
-}
-
-/**
- * Updates the label of a PR
- * @param {string} repoOwner eg: Typeform
- * @param {string} repoName eg: labeler
- * @param {string} number of the pull request
- * @param {Array} labels to be added to the pull request
- */
-const updatePRLabels = async (repoOwner, repoName, number, labels) => {
-  return octokit.issues.update({
-    owner: repoOwner,
-    repo: repoName,
-    issue_number: number,
-    labels,
-  })
-}
-
-module.exports = {
-  listAllOpenPRsForRepo,
-  addLabel,
-  removeLabel,
-}
+module.exports = GithubAPI
