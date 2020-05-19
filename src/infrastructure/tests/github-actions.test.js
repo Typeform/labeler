@@ -22,22 +22,22 @@ describe('getGithubToken', () => {
   })
 })
 
-describe('getRepositoryName', () => {
+describe('getRepositorySlug', () => {
   beforeEach(() => {
     jest.resetModules()
   })
-  it('should return RepositoryName if exists', () => {
+  it('should return RepositorySlug if exists', () => {
     jest.mock('../constants', () => ({ DEFAULT_REPOSITORY_NAME: 'Typeform/siesta' }))
     // eslint-disable-next-line global-require
-    const { getRepositoryName } = require('../github-actions')
-    expect(getRepositoryName()).toEqual('Typeform/siesta')
+    const { getRepositorySlug } = require('../github-actions')
+    expect(getRepositorySlug()).toEqual('Typeform/siesta')
   })
-  it('should throw error if no RepositoryName is specified', () => {
+  it('should throw error if no RepositorySlug is specified', () => {
     jest.mock('../constants', () => ({ DEFAULT_REPOSITORY_NAME: '' }))
     // eslint-disable-next-line global-require
-    const { getRepositoryName } = require('../github-actions')
+    const { getRepositorySlug } = require('../github-actions')
     try {
-      getRepositoryName()
+      getRepositorySlug()
     } catch (e) {
       expect(e.message).toEqual('Missing Repository Name')
     }
@@ -104,6 +104,18 @@ describe('getLabel', () => {
   })
 })
 
+describe('getBaseBranch', () => {
+  beforeEach(() => {
+    jest.resetModules()
+  })
+  it('should return a base branch', () => {
+    jest.mock('../constants', () => ({ DEFAULT_BASE_BRANCH: 'master' }))
+    // eslint-disable-next-line global-require
+    const { getBaseBranch } = require('../github-actions')
+    expect(getBaseBranch()).toEqual('master')
+  })
+})
+
 describe('throwGithubError', () => {
   beforeEach(() => {
     jest.resetModules()
@@ -115,5 +127,16 @@ describe('throwGithubError', () => {
     const core = require('@actions/core')
     throwGithubError('message')
     expect(core.setFailed).toHaveBeenCalledWith('message')
+  })
+})
+
+describe('getSeparatedRepositoryNameAndOwner', () => {
+  beforeEach(() => {
+    jest.resetModules()
+  })
+  it('should return separated name and owner', () => {
+    // eslint-disable-next-line global-require
+    const { getSeparatedRepositoryNameAndOwner } = require('../github-actions')
+    expect(getSeparatedRepositoryNameAndOwner('Typeform/labeler')).toEqual({ owner: 'Typeform', name: 'labeler' })
   })
 })

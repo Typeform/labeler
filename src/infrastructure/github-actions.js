@@ -1,6 +1,6 @@
 const core = require('@actions/core')
 
-const { DEFAULT_GITHUB_TOKEN, DEFAULT_LABEL, DEFAULT_LABEL_ACTION, DEFAULT_REPOSITORY_NAME } = require('./constants')
+const { DEFAULT_GITHUB_TOKEN, DEFAULT_LABEL, DEFAULT_LABEL_ACTION, DEFAULT_REPOSITORY_NAME, DEFAULT_BASE_BRANCH } = require('./constants')
 
 /**
  * Gets github token and parses it
@@ -12,9 +12,9 @@ const getGithubToken = () => {
 }
 
 /**
- * Gets repository name
+ * Gets repository slug. Eg. Typeform/labeler
  */
-const getRepositoryName = () => {
+const getRepositorySlug = () => {
   const repositoryName = core.getInput('repository-name') || DEFAULT_REPOSITORY_NAME
   if (repositoryName) return repositoryName
   throw new Error('Missing Repository Name')
@@ -42,6 +42,13 @@ const getLabel = () => {
 }
 
 /**
+ * Gets base branch
+ */
+const getBaseBranch = () => {
+  return (core.getInput('base-branch') || DEFAULT_BASE_BRANCH)
+}
+
+/**
  * Sets the Github Action to fail
  * @param {string} message
  */
@@ -49,10 +56,21 @@ const throwGithubError = (message) => {
   core.setFailed(message)
 }
 
+/**
+ * returns the owner and name of the repo
+ * @param {string} repositoryNameAndOwner
+ */
+const getSeparatedRepositoryNameAndOwner = (repositoryNameAndOwner) => {
+  const splitNameAndOwner = repositoryNameAndOwner.split('/')
+  return { owner: splitNameAndOwner[0], name: splitNameAndOwner[1] }
+}
+
 module.exports = {
   throwGithubError,
   getGithubToken,
   getLabel,
   getLabelAction,
-  getRepositoryName,
+  getRepositorySlug,
+  getBaseBranch,
+  getSeparatedRepositoryNameAndOwner,
 }

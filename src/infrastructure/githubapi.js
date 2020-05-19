@@ -1,60 +1,41 @@
-const axios = require('axios')
+const { Octokit } = require('@octokit/rest')
 
-const { getGithubToken } = require('./github-actions')
+const { getGithubToken, getSeparatedRepositoryNameAndOwner, getRepositorySlug } = require('./github-actions')
 
-const githubToken = getGithubToken()
+class GithubAPI {
+  constructor () {
+    this.authToken = getGithubToken()
+    this.repoOwner = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).owner
+    this.repoName = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).name
+    this.octokit = new Octokit({ auth: this.authToken })
+  }
 
-/**
- * Makes a call to get all the Open PRs for a Repo
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- */
-const listAllOpenPRsForRepo = async (repoNameWithOwner) => {
-  return axios({
-    method: 'GET',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/pulls`,
-  }).then(response => response.data)
+  /**
+   * Makes a call to get all the Open PRs for a Repo using pagination
+   * @param {String} baseBranch eg: master
+   */
+  async listAllOpenPRsForRepo (baseBranch) {
+    const params = {
+      owner: this.repoOwner,
+      repo: this.repoName,
+    }
+    if (baseBranch) params.base = baseBranch
+    return this.octokit.paginate('GET /repos/:owner/:repo/pulls', params)
+  }
+
+  /**
+   * Updates the label of a PR
+   * @param {String} number of the pull request
+   * @param {Array} labels to be added to the pull request
+   */
+  async updatePRLabels (number, labels) {
+    return this.octokit.issues.update({
+      owner: this.repoOwner,
+      repo: this.repoName,
+      issue_number: number,
+      labels,
+    })
+  }
 }
 
-/**
- * Updates the label of a PR
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- * @param {string} number of the pull request
- * @param {string} label to be added to the pull request
- */
-
-const updatePRLabels = async (repoNameWithOwner, number, label) => {
-  return axios({
-    method: 'PATCH',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/issues/${number}`,
-    data: {
-      labels: [`${label}`],
-    },
-  }).then(response => response.data)
-}
-
-/**
- * Deletes the labels of a PR
- * @param {string} repoNameWithOwner eg: Typeform/siesta
- * @param {string} number of the pull request
-
- */
-
-const deletePRLabels = async (repoNameWithOwner, number) => {
-  return axios({
-    method: 'PATCH',
-    baseURL: 'https://api.github.com/',
-    headers: { Authorization: `Bearer ${githubToken}` },
-    url: `repos/${repoNameWithOwner}/issues/${number}`,
-    data: {
-      labels: [],
-    },
-  }).then(response => response.data)
-}
-
-module.exports = {
-  listAllOpenPRsForRepo, updatePRLabels, deletePRLabels,
-}
+module.exports = GithubAPI
