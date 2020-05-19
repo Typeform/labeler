@@ -6,7 +6,7 @@ A Github Action that helps you to add and remove labels of all PRs in a given re
 ```github-token```: Mandatory, Github API TOKEN. [More info](https://github.com/settings/tokens)  
 ```repository-name```: Mandatory, string, the repository where the action is ran. eg: Typeform/labeler
 ```label_action```: Mandatory, option between add or remove    
-```label```: Mandatory, how you want to name your label
+```label```: Mandatory, how you want to name your label  
 ```base-branch```: Optional, filter pulls by base branch name. Default: all base branches
 
 ## Contributing
