@@ -12,9 +12,9 @@ const getGithubToken = () => {
 }
 
 /**
- * Gets repository name
+ * Gets repository slug. Eg. Typeform/labeler
  */
-const getRepositoryName = () => {
+const getRepositorySlug = () => {
   const repositoryName = core.getInput('repository-name') || DEFAULT_REPOSITORY_NAME
   if (repositoryName) return repositoryName
   throw new Error('Missing Repository Name')
@@ -56,11 +56,21 @@ const throwGithubError = (message) => {
   core.setFailed(message)
 }
 
+/**
+ * returns the owner and name of the repo
+ * @param {string} repositoryNameAndOwner
+ */
+const getSeparatedRepositoryNameAndOwner = (repositoryNameAndOwner) => {
+  const splitNameAndOwner = repositoryNameAndOwner.split('/')
+  return { owner: splitNameAndOwner[0], name: splitNameAndOwner[1] }
+}
+
 module.exports = {
   throwGithubError,
   getGithubToken,
   getLabel,
   getLabelAction,
-  getRepositoryName,
+  getRepositorySlug,
   getBaseBranch,
+  getSeparatedRepositoryNameAndOwner,
 }
