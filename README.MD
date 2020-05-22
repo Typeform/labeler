@@ -1,4 +1,4 @@
-# labeler
+# labeler  
 A Github Action that helps you to add and remove labels of all PRs in a given repo.
 
 ## Usage
