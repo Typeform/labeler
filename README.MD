@@ -38,7 +38,7 @@ yarn start
 
 ### How to run tests
 ```bash
-yarn test
+yarn test 
 ```
 ### How to distribute
 Github actions requires all the package dependencies in the repo to run the JavaScript code.  
