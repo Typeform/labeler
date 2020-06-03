@@ -8,7 +8,8 @@ A Github Action that helps you to add and remove labels of all PRs in a given re
 ```label_action```: Mandatory, option between add or remove    
 ```label```: Mandatory, how you want to name your label  
 ```base-branch```: Optional, filter pulls by base branch name. Default: all base branches  
-
+```hard-failure```: Optional, boolean, if true, fails the build on any error. If false, throws an warning instead. Default is false.  
+  
 ## Contributing
 All code should pass tests, as well as be well documented. [Please also see the Commit Message Guidelines](CONTRIBUTING.MD) for how commit messages should be structured.
 

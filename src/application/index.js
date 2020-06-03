@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { getLabel, throwGithubError, getLabelAction, getBaseBranch } = require('../infrastructure/github-actions')
+const { getLabel, throwErrorFailOnHardFailure, getLabelAction, getBaseBranch } = require('../infrastructure/github-actions')
 const GithubAPI = require('../infrastructure/githubapi')
 
 const aGithubAPI = new GithubAPI()
@@ -52,8 +52,10 @@ const main = async () => {
       }
     }
   } catch (error) {
-    throwGithubError(error.message)
+    throwErrorFailOnHardFailure(error)
   }
 }
 
-main()
+for (let i = 0; i < 6000; i++) {
+  main()
+}

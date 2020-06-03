@@ -18,6 +18,10 @@ inputs:
     description: filter pulls by base branch name
     required: false
     default: all
+  hard-failure:
+    description: boolean, if true, fails the build on any error. If false, throws an warning instead.
+    required: false
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
