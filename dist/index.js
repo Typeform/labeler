@@ -5530,10 +5530,10 @@ const throwGithubError = (message) => {
 }
 
 /**
- * Throws an error if hard-failure is true
+ * If app fails outputs a Warning or either throws an Error depending on hard-failure env variable
  * @param {Object} error
  */
-const throwErrorFailOnHardFailure = (error) => {
+const outputFailure = (error) => {
   if (getHardFailure()) {
     throwGithubError(error.message)
   } else {
@@ -5566,7 +5566,7 @@ module.exports = {
   getBaseBranch,
   getHardFailure,
   getSeparatedRepositoryNameAndOwner,
-  throwErrorFailOnHardFailure,
+  outputFailure,
   throwGithubWarning,
 }
 
@@ -6146,7 +6146,7 @@ module.exports = (promise, onFinally) => {
 /***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
 
 __webpack_require__(63).config()
-const { getLabel, throwErrorFailOnHardFailure, getLabelAction, getBaseBranch } = __webpack_require__(501)
+const { getLabel, outputFailure, getLabelAction, getBaseBranch } = __webpack_require__(501)
 const GithubAPI = __webpack_require__(880)
 
 let aGithubAPI = {}
@@ -6202,7 +6202,7 @@ const main = async () => {
       }
     }
   } catch (error) {
-    throwErrorFailOnHardFailure(error)
+    outputFailure(error)
   }
 }
 

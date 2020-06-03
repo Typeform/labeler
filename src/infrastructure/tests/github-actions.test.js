@@ -143,7 +143,7 @@ describe('throwGithubError', () => {
   })
 })
 
-describe('throwErrorFailOnHardFailure', () => {
+describe('outputFailure', () => {
   beforeEach(() => {
     jest.resetModules()
   })
@@ -151,19 +151,19 @@ describe('throwErrorFailOnHardFailure', () => {
     jest.mock('../constants', () => ({ DEFAULT_HARD_FAILURE: 'true' }))
 
     // eslint-disable-next-line global-require
-    const { throwErrorFailOnHardFailure } = require('../github-actions')
+    const { outputFailure } = require('../github-actions')
     // eslint-disable-next-line global-require
     const core = require('@actions/core')
-    throwErrorFailOnHardFailure({ message: 'message' })
+    outputFailure({ message: 'message' })
     expect(core.setFailed).toHaveBeenCalledWith('message')
   })
   it('should throw github warning if HARD_FAILURE false', () => {
     jest.mock('../constants', () => ({ DEFAULT_HARD_FAILURE: 'false' }))
     // eslint-disable-next-line global-require
-    const { throwErrorFailOnHardFailure } = require('../github-actions')
+    const { outputFailure } = require('../github-actions')
     // eslint-disable-next-line global-require
     const core = require('@actions/core')
-    throwErrorFailOnHardFailure({ message: 'message' })
+    outputFailure({ message: 'message' })
     expect(core.warning).toBeCalledWith('message')
   })
 })
