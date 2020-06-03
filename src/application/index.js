@@ -56,6 +56,5 @@ const main = async () => {
   }
 }
 
-for (let i = 0; i < 6000; i++) {
-  main()
-}
+main()
+
