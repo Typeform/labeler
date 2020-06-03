@@ -6149,7 +6149,7 @@ __webpack_require__(63).config()
 const { getLabel, throwErrorFailOnHardFailure, getLabelAction, getBaseBranch } = __webpack_require__(501)
 const GithubAPI = __webpack_require__(880)
 
-const aGithubAPI = new GithubAPI()
+let aGithubAPI = {}
 
 /**
  * Adds a label in a PullRequest
@@ -6158,6 +6158,7 @@ const aGithubAPI = new GithubAPI()
  * @param {String} number of the pull request
 */
 const addLabel = (labelToAdd, labels, number) => {
+  console.log(`...Adding label ${labelToAdd} to PR ${number}`)
   return aGithubAPI.updatePRLabels(number, [...labels, labelToAdd])
 }
 
@@ -6168,6 +6169,7 @@ const addLabel = (labelToAdd, labels, number) => {
  * @param {String} number of the pull request
 */
 const removeLabel = (labelToDelete, labels, number) => {
+  console.log(`...Removing label ${labelToDelete} from PR ${number}`)
   return aGithubAPI.updatePRLabels(number, labels.filter(label => label !== labelToDelete))
 }
 
@@ -6181,6 +6183,7 @@ const listAllOpenPRs = (baseBranch) => {
 
 const main = async () => {
   try {
+    aGithubAPI = new GithubAPI()
     const openPullRequests = await listAllOpenPRs(getBaseBranch())
 
     for (const pr of openPullRequests) {
