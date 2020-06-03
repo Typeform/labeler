@@ -1,8 +1,8 @@
 require('dotenv').config()
-const { getLabel, throwGithubError, getLabelAction, getBaseBranch } = require('../infrastructure/github-actions')
+const { getLabel, outputFailure, getLabelAction, getBaseBranch } = require('../infrastructure/github-actions')
 const GithubAPI = require('../infrastructure/githubapi')
 
-const aGithubAPI = new GithubAPI()
+let aGithubAPI = {}
 
 /**
  * Adds a label in a PullRequest
@@ -11,6 +11,7 @@ const aGithubAPI = new GithubAPI()
  * @param {String} number of the pull request
 */
 const addLabel = (labelToAdd, labels, number) => {
+  console.log(`...Adding label ${labelToAdd} to PR ${number}`)
   return aGithubAPI.updatePRLabels(number, [...labels, labelToAdd])
 }
 
@@ -21,6 +22,7 @@ const addLabel = (labelToAdd, labels, number) => {
  * @param {String} number of the pull request
 */
 const removeLabel = (labelToDelete, labels, number) => {
+  console.log(`...Removing label ${labelToDelete} from PR ${number}`)
   return aGithubAPI.updatePRLabels(number, labels.filter(label => label !== labelToDelete))
 }
 
@@ -34,6 +36,7 @@ const listAllOpenPRs = (baseBranch) => {
 
 const main = async () => {
   try {
+    aGithubAPI = new GithubAPI()
     const openPullRequests = await listAllOpenPRs(getBaseBranch())
 
     for (const pr of openPullRequests) {
@@ -52,7 +55,7 @@ const main = async () => {
       }
     }
   } catch (error) {
-    throwGithubError(error.message)
+    outputFailure(error)
   }
 }
 

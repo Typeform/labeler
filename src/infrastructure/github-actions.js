@@ -1,6 +1,13 @@
 const core = require('@actions/core')
 
-const { DEFAULT_GITHUB_TOKEN, DEFAULT_LABEL, DEFAULT_LABEL_ACTION, DEFAULT_REPOSITORY_NAME, DEFAULT_BASE_BRANCH } = require('./constants')
+const {
+  DEFAULT_GITHUB_TOKEN,
+  DEFAULT_LABEL,
+  DEFAULT_LABEL_ACTION,
+  DEFAULT_REPOSITORY_NAME,
+  DEFAULT_BASE_BRANCH,
+  DEFAULT_HARD_FAILURE,
+} = require('./constants')
 
 /**
  * Gets github token and parses it
@@ -49,11 +56,39 @@ const getBaseBranch = () => {
 }
 
 /**
+ * Gets hard-failure
+ */
+const getHardFailure = () => {
+  const shouldHardFailure = core.getInput('hard-failure') || DEFAULT_HARD_FAILURE
+  if (shouldHardFailure.toLowerCase() === 'true') return true
+  return false
+}
+
+/**
  * Sets the Github Action to fail
  * @param {string} message
  */
 const throwGithubError = (message) => {
   core.setFailed(message)
+}
+
+/**
+ * If app fails outputs a Warning or either throws an Error depending on hard-failure env variable
+ * @param {Object} error
+ */
+const outputFailure = (error) => {
+  if (getHardFailure()) {
+    throwGithubError(error.message)
+  } else {
+    throwGithubWarning(error.message)
+  }
+}
+/**
+ * Sets a Github warning in the console
+ * @param {string} message
+ */
+const throwGithubWarning = (message) => {
+  core.warning(message)
 }
 
 /**
@@ -72,5 +107,8 @@ module.exports = {
   getLabelAction,
   getRepositorySlug,
   getBaseBranch,
+  getHardFailure,
   getSeparatedRepositoryNameAndOwner,
+  outputFailure,
+  throwGithubWarning,
 }

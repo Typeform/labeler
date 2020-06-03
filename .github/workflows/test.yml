@@ -14,8 +14,9 @@ jobs:
         uses: ./
         id: labeler
         with:
-          github-token: ${{ secrets.labeler_github_token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           repository-name: ${{ github.repository }}
           label-action: add
           label: LABELER_TEST
           base-branch: master
+          hard-failure: true

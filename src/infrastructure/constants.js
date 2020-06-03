@@ -3,6 +3,7 @@ const DEFAULT_REPOSITORY_NAME = process.env.REPOSITORY_NAME
 const DEFAULT_LABEL_ACTION = process.env.LABEL_ACTION
 const DEFAULT_LABEL = process.env.LABEL
 const DEFAULT_BASE_BRANCH = process.env.BASE_BRANCH
+const DEFAULT_HARD_FAILURE = process.env.HARD_FAILURE || 'false'
 
 module.exports = {
   DEFAULT_GITHUB_TOKEN,
@@ -10,4 +11,5 @@ module.exports = {
   DEFAULT_LABEL_ACTION,
   DEFAULT_REPOSITORY_NAME,
   DEFAULT_BASE_BRANCH,
+  DEFAULT_HARD_FAILURE,
 }

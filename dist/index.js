@@ -2643,6 +2643,7 @@ const DEFAULT_REPOSITORY_NAME = process.env.REPOSITORY_NAME
 const DEFAULT_LABEL_ACTION = process.env.LABEL_ACTION
 const DEFAULT_LABEL = process.env.LABEL
 const DEFAULT_BASE_BRANCH = process.env.BASE_BRANCH
+const DEFAULT_HARD_FAILURE = process.env.HARD_FAILURE || 'false'
 
 module.exports = {
   DEFAULT_GITHUB_TOKEN,
@@ -2650,6 +2651,7 @@ module.exports = {
   DEFAULT_LABEL_ACTION,
   DEFAULT_REPOSITORY_NAME,
   DEFAULT_BASE_BRANCH,
+  DEFAULT_HARD_FAILURE,
 }
 
 
@@ -5455,7 +5457,14 @@ module.exports = resolveCommand;
 
 const core = __webpack_require__(470)
 
-const { DEFAULT_GITHUB_TOKEN, DEFAULT_LABEL, DEFAULT_LABEL_ACTION, DEFAULT_REPOSITORY_NAME, DEFAULT_BASE_BRANCH } = __webpack_require__(328)
+const {
+  DEFAULT_GITHUB_TOKEN,
+  DEFAULT_LABEL,
+  DEFAULT_LABEL_ACTION,
+  DEFAULT_REPOSITORY_NAME,
+  DEFAULT_BASE_BRANCH,
+  DEFAULT_HARD_FAILURE,
+} = __webpack_require__(328)
 
 /**
  * Gets github token and parses it
@@ -5504,16 +5513,44 @@ const getBaseBranch = () => {
 }
 
 /**
+ * Gets hard-failure
+ */
+const getHardFailure = () => {
+  const shouldHardFailure = core.getInput('hard-failure') || DEFAULT_HARD_FAILURE
+  if (shouldHardFailure.toLowerCase() === 'true') return true
+  return false
+}
+
+/**
  * Sets the Github Action to fail
- * @param {String} message
+ * @param {string} message
  */
 const throwGithubError = (message) => {
   core.setFailed(message)
 }
 
 /**
+ * If app fails outputs a Warning or either throws an Error depending on hard-failure env variable
+ * @param {Object} error
+ */
+const outputFailure = (error) => {
+  if (getHardFailure()) {
+    throwGithubError(error.message)
+  } else {
+    throwGithubWarning(error.message)
+  }
+}
+/**
+ * Sets a Github warning in the console
+ * @param {string} message
+ */
+const throwGithubWarning = (message) => {
+  core.warning(message)
+}
+
+/**
  * returns the owner and name of the repo
- * @param {String} repositoryNameAndOwner
+ * @param {string} repositoryNameAndOwner
  */
 const getSeparatedRepositoryNameAndOwner = (repositoryNameAndOwner) => {
   const splitNameAndOwner = repositoryNameAndOwner.split('/')
@@ -5527,7 +5564,10 @@ module.exports = {
   getLabelAction,
   getRepositorySlug,
   getBaseBranch,
+  getHardFailure,
   getSeparatedRepositoryNameAndOwner,
+  outputFailure,
+  throwGithubWarning,
 }
 
 
@@ -6106,10 +6146,10 @@ module.exports = (promise, onFinally) => {
 /***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
 
 __webpack_require__(63).config()
-const { getLabel, throwGithubError, getLabelAction, getBaseBranch } = __webpack_require__(501)
+const { getLabel, outputFailure, getLabelAction, getBaseBranch } = __webpack_require__(501)
 const GithubAPI = __webpack_require__(880)
 
-const aGithubAPI = new GithubAPI()
+let aGithubAPI = {}
 
 /**
  * Adds a label in a PullRequest
@@ -6118,6 +6158,7 @@ const aGithubAPI = new GithubAPI()
  * @param {String} number of the pull request
 */
 const addLabel = (labelToAdd, labels, number) => {
+  console.log(`...Adding label ${labelToAdd} to PR ${number}`)
   return aGithubAPI.updatePRLabels(number, [...labels, labelToAdd])
 }
 
@@ -6128,6 +6169,7 @@ const addLabel = (labelToAdd, labels, number) => {
  * @param {String} number of the pull request
 */
 const removeLabel = (labelToDelete, labels, number) => {
+  console.log(`...Removing label ${labelToDelete} from PR ${number}`)
   return aGithubAPI.updatePRLabels(number, labels.filter(label => label !== labelToDelete))
 }
 
@@ -6141,6 +6183,7 @@ const listAllOpenPRs = (baseBranch) => {
 
 const main = async () => {
   try {
+    aGithubAPI = new GithubAPI()
     const openPullRequests = await listAllOpenPRs(getBaseBranch())
 
     for (const pr of openPullRequests) {
@@ -6159,7 +6202,7 @@ const main = async () => {
       }
     }
   } catch (error) {
-    throwGithubError(error.message)
+    outputFailure(error)
   }
 }
 
