@@ -1,5 +1,5 @@
 const { Octokit } = require('@octokit/rest')
-const logger = require("console-log-level")
+const logger = require('console-log-level')
 
 const { getGithubToken, getSeparatedRepositoryNameAndOwner, getRepositorySlug } = require('./github-actions')
 
@@ -8,7 +8,7 @@ class GithubAPI {
     this.authToken = getGithubToken()
     this.repoOwner = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).owner
     this.repoName = getSeparatedRepositoryNameAndOwner(getRepositorySlug()).name
-    this.octokit = new Octokit({ auth: this.authToken, log: logger({ level: "info" })})
+    this.octokit = new Octokit({ auth: this.authToken, log: logger({ level: 'info' }) })
   }
 
   /**
