@@ -16,7 +16,8 @@
     "@actions/github": "^2.2.0",
     "@octokit/rest": "^17.9.1",
     "dotenv": "^8.2.0",
-    "github-api": "^3.3.0"
+    "github-api": "^3.3.0",
+    "console-log-level": "^1.4.1"
   },
   "devDependencies": {
     "@zeit/ncc": "^0.22.1",
