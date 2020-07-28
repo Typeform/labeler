@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron:  '2/60 * * * *'
+    - cron:  '1/60 * * * *'
   pull_request:
     branches:
       - master
@@ -10,7 +10,7 @@ jobs:
     name: check no deploy window
     steps:
       - name: is deploy calendar busy?
-        uses: Typeform/siesta@v1.1
+        uses: Typeform/siesta@v1
         id: siesta
         with:
           google-credentials: ${{ secrets.siesta_google_credentials }}
@@ -19,7 +19,6 @@ jobs:
           custom-calendar-busy-message: 'There is an event in the Calendar. Deploying not recommended.'
           custom-calendar-not-busy-message: 'No event in the Calendar. Feel free to deploy.'
           fail-if-busy: false
-          hard-failure: true
       - name: set label action based on result
         uses: haya14busa/action-cond@v1.0.0
         id: condval
@@ -36,4 +35,3 @@ jobs:
           label: no-deploy-window
           label-action: ${{steps.condval.outputs.value}}
           base-branch: master
-          hard-failure: true
